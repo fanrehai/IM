@@ -1,0 +1,462 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>在线聊天</title>
+<link href="css/bootstrap.min.css" rel="stylesheet">
+<link href="css/jquery-sinaEmotion-2.1.0.min.css" rel="stylesheet">
+<link href="css/style.css" rel="stylesheet">
+<link href="//netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+<script type="text/javascript" src="js/swfobject.js"></script>
+<script type="text/javascript" src="js/web_socket.js"></script>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/jquery-sinaEmotion-2.1.0.min.js"></script>
+<script type="text/javascript">
+    let log = console.log.bind(console);
+
+    var user_id   = sessionStorage.getItem('user_id');
+    var user_name = sessionStorage.getItem('user_name');
+    var user_icon = sessionStorage.getItem('user_icon');
+    // var client_id = sessionStorage.getItem('client_id');
+
+    if(!user_id || !user_name){
+        alert('请登录');
+        window.location.href = 'http://worker.bmf.com/web/login.html';
+    }
+
+    if (typeof console == "undefined") {    this.console = { log: function (msg) {  } };}
+    // 如果浏览器不支持websocket，会使用这个flash自动模拟websocket协议，此过程对开发者透明
+    WEB_SOCKET_SWF_LOCATION = "/swf/WebSocketMain.swf";
+    // 开启flash的websocket debug
+    WEB_SOCKET_DEBUG = true;
+    var ws, name = {};
+
+    var uid = '0';
+    // client_list
+    // 回车键发送消息
+    document.onkeydown=function(event){
+        var event = event || window.event || arguments.callee.caller.arguments[0];
+        if(event && event.keyCode == 13){ // enter 键
+            onSubmit();
+            event.preventDefault();
+            add();
+        }
+    };
+
+    // window.onbeforeunload=function(e){
+    //   var e=window.event||e;
+    //   e.returnValue=("确定离开当前页面吗？");
+    // }
+    /////////////////////////////////////////////////////////////////////////////////
+    document.addEventListener('paste', function (event) {//.querySelector('#textarea')
+        // log(event);
+        event.preventDefault();
+        var isChrome = false;
+        if (event.clipboardData || event.originalEvent) {
+            //某些chrome版本使用的是event.originalEvent
+            var clipboardData = (event.clipboardData || event.originalEvent.clipboardData);
+            if(clipboardData.items){
+                // for chrome
+                var items = clipboardData.items,
+                    len = items.length,
+                    blob = null;
+                    isChrome = true;
+                // log(items);
+                for (var i = 0; i < len; i++) {
+                    log(items[i]);
+                    if (items[i].type.indexOf("image") !== -1) {
+                        //getAsFile() 此方法只是living standard firefox ie11 并不支持
+                        blob = items[i].getAsFile();
+                    }
+                }
+                if(blob !== null){
+                    var blobUrl = URL.createObjectURL(blob);
+                    // console.log(blobUrl);
+                    //blob对象显示
+                    // ///////
+                    var html = '<img src="' + blobUrl + '" />';
+                    $("#textarea").append(html);
+                    // ///////
+                    // $("#textarea").focus();
+                    //base64码显示
+                    // var reader = new FileReader();
+                    // reader.onload = function (event) {
+                    //     // event.target.result 即为图片的Base64编码字符串
+                    //     var base64_str = event.target.result;
+                    //
+                    //     // document.getElementById("imgNode").src=base64_str;
+                    //     $("#imgNode").attr('src',base64_str);
+                    // }
+                    // reader.readAsDataURL(blob);
+                }
+            }
+        }
+    });
+    /////////////////////////////////////////////////////////////////////////////////
+
+    function add(){
+       var div = document.getElementById('dialog');
+       var hei = div.scrollHeight;
+       $("#dialog").scrollTop(hei);
+   }
+  // 连接服务端
+  function connect() {
+     // 创建websocket
+     ws = new WebSocket("ws://"+document.domain+":7272");
+     // 当socket连接打开时，输入用户名
+     // ws.onopen = onopen;
+     // 当有消息时根据消息类型显示不同信息
+     ws.onmessage = onmessage;
+     // ws.onclose = function() {
+     //    console.log("连接关闭，定时重连");
+     //    connect();
+     // };
+     ws.onclose = onclose;
+     ws.onerror = function() {
+        console.log("出现错误");
+     };
+  }
+    // 关闭连接时
+    function onclose(){
+        $.get('http://worker.bmf.com/user/close');
+        if(!sessionStorage.getItem('user_id') || !sessionStorage.getItem('user_name')){
+            alert('当前账户已在其他地方登录，请确保账号密码没有泄露');
+            window.location.href = 'http://worker.bmf.com/web/login.html';
+        }else{
+            alert('调用了接口');
+            connect();
+        }
+        console.log("连接关闭，定时重连");
+    }
+    // 保存客户端ID
+    function setClient(client_id){
+        sessionStorage.setItem('client_id',client_id);
+    }
+    // 连接建立时发送登录信息
+    // function onopen(){
+    //     if(sessionStorage.getItem('user_id') || sessionStorage.getItem('user_name')){
+    //         // 登录
+    //         // <?php echo isset($_GET['room_id']) ? $_GET['room_id'] : 1?>
+    //         var login_data = '{"type":"login","client_name":"'+user_name.replace(/"/g, '\\"')+'","room_id":"1","user_id":"'+user_id+'"}';
+    //         console.log("websocket握手成功，发送登录数据:"+login_data);
+    //         ws.send(login_data);
+    //      }
+    // }
+  // 服务端发来消息时
+  function onmessage(e){
+
+      var data = JSON.parse(e.data);
+      // console.log(data);
+      switch(data['type']){
+          // 服务端ping客户端
+          case 'ping':
+              if(sessionStorage.getItem('user_id') && sessionStorage.getItem('user_name')){
+                  ws.send('{type: "pong"}');
+              }
+              // $.post('http://worker.bmf.com/index.php/home/user/userPing', {type: "pong"}, function(data){
+              //     log('Ping' + data);
+              // }, 'json');
+              break;
+          // 服务端注册客户端ID
+          case 'init':
+             setClient(data['client_id']);
+             $.post('http://worker.bmf.com/user/bind', {client_id: data['client_id'],user_id: user_id}, function(res){
+                 log(res);
+             }, 'json');
+             $.get('http://worker.bmf.com/user/friends', {user_id: user_id}, function(res){
+                 if(res.code == '200'){
+                     flush_client_list(res.data);
+                 }
+             }, 'json');
+             break;
+          // 登录 更新用户列表
+          case 'login':
+              //{"type":"login","client_id":xxx,"client_name":"xxx","client_list":"[...]","time":"xxx"}
+              // say(data['client_id'], data['client_name'],  data['client_name']+' 加入了聊天室', data['time']);
+              // say(data);
+              // data['from_client_id'], data['form_client_name'],  data['content'], data['time']
+              // log('uid3',data['from_client_id']);
+              // $("#other_nickname").html(data['client_name']);
+              // $("#user_state").removeClass('offline').addClass('online');
+              // add();
+              // if(data['client_list']) {
+              //     client_list = data['client_list'];
+              // }else{
+              //     client_list[data['client_id']] = data['client_name'];
+              // }
+              // flush_client_list();
+              // console.log(data['client_name']+"登录成功");
+              break;
+          // 发言
+          case 'say':
+              var friend_id = 'user'+ data['from_user_id'];
+              var class_name = $("#" + friend_id).attr('class');
+              // 判断是否当前选中聊天框
+              if(typeof(class_name) != "undefined"){
+                  if(class_name.indexOf('user_active') < 0){
+                      $("#" + friend_id).addClass('onmsg');
+                      $("#" + friend_id).find('span.nickname').addClass('onmsg');
+                      $("#" + friend_id).find('p.user_signature').addClass('onmsg');
+                  }
+              }
+              //{"type":"say","from_client_id":xxx,"to_client_id":"all/client_id","content":"xxx","time":"xxx"}
+              say(data);
+              // data['from_client_id'],data['from_user_icon'], data['from_client_name'], data['content'], data['time'],data['say_id']
+              add();
+              break;
+          // 用户退出 更新用户列表
+          case 'logout':
+              //{"type":"logout","client_id":xxx,"time":"xxx"}
+              // say('10086', data['from_client_name'], data['from_client_name']+' 退出了', data['time']);
+              $("#user_state").removeClass('online').addClass('offline');
+              add();
+              // console.log( $("#user_state"+data['from_client_id']));
+              // flush_client_list();
+          // 账户在其他地方登录
+          case 'loginclash':
+              say(data);
+              // '10086', data['from_client_name'], data['content'], data['time']
+              $("#user_state").removeClass('online').addClass('offline');
+              sessionStorage.removeItem('user_id');
+              sessionStorage.removeItem('user_name');
+              sessionStorage.removeItem('client_id');
+              // add();
+              // console.log( $("#user_state"+data['from_client_id']));
+              // flush_client_list();
+              // 账户在其他地方登录
+          case 'friend_online':
+              var friend_id = 'user'+ data['from_user_id'];
+              var html_this = '<li id="' + friend_id + '" class="user_info">' + $("#" + friend_id).html() + '</li>';
+
+              $("#" + friend_id).remove();
+              $("#user_online").append(html_this);
+              $("#" + friend_id).children("div.user_state").attr('id',data['from_client_id']);
+              $("#" + friend_id).children("div.user_state").removeClass('offline').addClass('online');
+              break;
+          case 'friend_offline':
+              var friend_id = data['from_client_id'];
+              var parent_id = $("#" + friend_id).parent().attr('id');
+              var html_this = '<li id="' + parent_id + '" class="user_info">' + $("#" + parent_id).html() + '</li>';
+
+              $("#" + parent_id).remove();
+              $("#user_offline").append(html_this);
+              $("#" + friend_id).removeClass('online').addClass('offline');
+              break;
+      }
+
+  }
+
+  // 提交对话
+  function onSubmit() {
+    // var area = document.getElementById("textarea");
+    // log($("#textarea").html());
+    // return;
+    var inputValue = $("#textarea").html().replace(/\s*/g,"");
+    if(inputValue.length == 0 || inputValue == null){
+        alert('不能发送空白消息');
+        $("#textarea").html('');
+        return false;
+    }
+    // var to_client_id = 'a';//$("#client_list option:selected").attr("value");
+    // var to_client_name = $("#client_list option:selected").text();
+    var to_user_id = $("li.user_active").attr("id");
+    if(typeof(to_user_id) == "undefined"){
+        alert('请选择好友');
+        return false;
+    }
+    to_user_id = to_user_id.substring(4);
+    $.post('http://worker.bmf.com/user/say',{
+            type: 'say',
+            client_id: sessionStorage.getItem('client_id'),
+            to_user_id: to_user_id,
+            user_id: user_id,
+            user_icon: sessionStorage.getItem('user_icon'),
+            content: $("#textarea").html().replace(/"/g, '\\"').replace(/\n/g,'\\n').replace(/\r/g, '\\r'),
+        }, function(res){
+            log(res);
+            if(res.code !== 200){
+                $("#" + res.data).children('div.user_content').append('<span class="msg_error" title="' + res.msg + '"><i class="fa fa-exclamation-circle"></i></span>');
+            }
+        }, 'json'
+    );
+    $("#textarea").html('');
+    $("#textarea").focus();
+
+    $(window).bind('beforeunload',function(){
+        return '>>>>>你想去百度首页吗<<<<<<<< \n yes or no';
+    });
+  }
+
+  // 刷新用户列表框
+  function flush_client_list(data){
+      // var userlist_window = $("#userlist");
+      // userlist_window.empty();
+      $("#user_online").empty();
+      $("#user_offline").empty();
+      // var client_list_slelect = $("#client_list");
+      // userlist_window.empty();
+      // client_list_slelect.empty();
+      // client_list_slelect.append('<option value="all" id="cli_all">所有人</option>');
+      //  id="' + data[p].id + '"
+      //   user"' + data[p].id '"
+      for(var p in data){
+          var html = '<li id="user' + data[p].id + '" class="user_info"><div class="user_icon"><img src="' + data[p].avatar_url + '" /></div><div class="user_name"><p class="user_nickname" title="' + data[p].remark +'(' +  data[p].nickname +')"><span>' + data[p].remark +'</span><span class="nickname">('+ data[p].nickname + ')</span></p><p class="user_signature" title="' + data[p].signature + '">' + data[p].signature + '</p></div>';
+          if(data[p].online_state == 1){
+              html += '<div id="' + data[p].client_id + '" class="user_state online"></div></li>';
+              $("#user_online").append(html);
+          }else{
+              html += '<div class="user_state offline"></div></li>';
+              $("#user_offline").append(html);
+          }
+          // $html += '</li>';
+          // userlist_window.append($html);
+          // <span id="user_state' + p + '" class="user_state online"></span>
+          // client_list_slelect.append('<option value="'+p+'">'+data[p].nickname+'</option>');
+      }
+      // $("#client_list").val('all');
+      // console.log('1');
+  }
+
+  // 发言
+  function say(data){
+      // from_client_id, from_client_name, content, time, say_id = ''
+      //解析新浪微博图片
+      data['content'] = data['content'].replace(/(http|https):\/\/[\w]+.sinaimg.cn[\S]+(jpg|png|gif)/gi, function(img){
+          return "<a target='_blank' href='"+data['img']+"'>"+"<img src='"+data['img']+"'>"+"</a>";
+      });
+      //解析url
+      data['content'] = data['content'].replace(/(http|https):\/\/[\S]+/gi, function(url){
+          if(url.indexOf(".sinaimg.cn/") < 0)
+              return "<a target='_blank' href='"+data['url']+"'>"+data['url']+"</a>";
+          else
+              return data['url'];
+      });
+      var client_id = sessionStorage.getItem('client_id');
+
+      add();
+
+      var friend_id = data['from_user_id'];
+      var user_id = sessionStorage.getItem('user_id');
+      if(friend_id == user_id){
+          friend_id = data['to_user_id'];
+      }
+      var msg_pack = $("#dialog").children('li#user' + friend_id)[0];
+      if(typeof(msg_pack) == "undefined"){
+          $("#dialog").append('<li class="caption" id="user' + friend_id + '"><ul class="user_message"</ul></li>');
+          $("#dialog").children('li#user' + friend_id).hide();
+      }
+
+      if(client_id == data['from_client_id']){
+           $("#dialog").children('li#user' + friend_id).children('ul.user_message').append('<li id="' + data['say_id'] + '" class="speech_item"><div class="user_info right"><img src="'+ data['from_user_icon'] +'" class="user_icon" /></div><div class="user_name text_right">'+ data['from_client_name'] +'</div><div class="user_content right"><p class="triangle-isosceles top">'+ data['content'] +'</p></div></li>').parseEmotion();//<div class="user_time">'+time+'</div><div style="clear:both;"></div>
+      }else{
+          if(data['from_client_id'] == '10086'){
+              $("#dialog_main").append('<li id="' + data['say_id'] + '" class="speech_item center"><div class="user_time">'+ data['time'] +'</div><div class="user_content center"><p class="triangle-isosceles top">'+ data['content'] +'</p></div></li>').parseEmotion();
+          }else{
+              $("#dialog").children('li#user' + friend_id).children('ul.user_message').append('<li id="' + data['say_id'] + '" class="speech_item"><div class="user_info left"><img src="'+ data['from_user_icon'] +'" class="user_icon" /></div><div class="user_name text_left">'+ data['from_client_name'] +'</div><div class="user_content left"><p class="triangle-isosceles top">'+ data['content'] +'</p></div></li>').parseEmotion();//<div class="user_time">'+time+'</div><div style="clear:both;"></div>
+          }
+      }
+  }
+
+    $(function(){
+        select_client_id = 'all';
+        $("#client_list").change(function(){
+           select_client_id = $("#client_list option:selected").attr("value");
+        });
+        // $('.face').click(function(event){
+          // $(this).sinaEmotion();
+          // console.log($(this).index());
+          // event.stopPropagation();
+        // });
+        $('#userlist').on('click','.user_info',function(){
+            // 点击好友头像时判断聊天框是否存在
+            var friend_id = $(this).attr('id');
+            var msg_pack = $("#dialog").children('li#' + friend_id)[0];
+            if(typeof(msg_pack) == "undefined"){
+              $("#dialog").append('<li class="caption" id="' + friend_id + '"><ul class="user_message"></ul></li>');
+            }
+            // 去除点击效果及消息闪烁效果
+            $("#userlist").find('li.user_info').removeClass('user_active');
+            $(this).removeClass('onmsg').addClass('user_active');
+            $(this).find('span.nickname').removeClass('onmsg');
+            $(this).find('p.user_signature').removeClass('onmsg');
+            // 隐藏其他聊天框
+            $("#dialog_main").hide();
+            $("#dialog").children('li#' + friend_id).siblings().hide();
+            $("#dialog").children('li#' + friend_id).show();
+            // 点击好友头像时判断聊天框是否在底部
+            $("#dialog").scrollTop($("#dialog").children('li#' + friend_id)[0].scrollHeight);
+        });
+        // 图片点击效果
+        $("#textarea").on('click','img',function(e){
+            //如果提供了事件对象，则这是一个非IE浏览器
+            if (e && e.stopPropagation) {
+                //因此它支持W3C的stopPropagation()方法
+                e.stopPropagation();
+            }else{
+                //否则，我们需要使用IE的方式来取消事件冒泡
+                window.event.cancelBubble = true;
+                return false;
+            }
+            var img_active = $(this).attr('class');
+            var nowImg = $(this)[0]
+            if(!nowImg.classList.contains('img_active')){
+                $(this).addClass("img_active");
+                $(this).siblings().removeClass("img_active");
+            }
+        });
+        // 图片失焦事件
+        $(document).on('click',function(event){
+            $("#textarea img").removeClass('img_active');
+        });
+
+        // $(document).bind('beforeunload',function(){
+        //     return '您输入的内容尚未保存，确定离开此页面吗？';
+        // });
+  });
+</script>
+</head>
+<body onload="connect();">
+    <div class="container">
+	    <div class="row clearfix">
+            <div class="col-md-3 column">
+	           <div class="thumbnail_user">
+                   <ul class="caption" id="userlist">
+                       <li>
+                           <ul id="user_online"></ul>
+                       </li>
+                       <li>
+                           <ul id="user_offline"></ul>
+                       </li>
+                   </ul>
+               </div>
+	        </div>
+	        <div id="duihua" class="col-md-6 column">
+                <!-- <div class="other_info">
+                    <span id="other_nickname"></span>
+                    <span id="user_state" class="user_state offline"></span>
+                </div> -->
+                <ul class="thumbnaila" id="dialog"><!--  -->
+	               <li class="caption" id="dialog_main"><!-- 用户ID -->
+                       <ul class="user_message">
+                       </ul>
+                   </li>
+               </ul>
+	            <!-- <form onsubmit="onSubmit(); return false;"> -->
+	                <!-- <select style="margin-bottom:8px" id="client_list">
+                        <option value="all">所有人</option>
+                    </select> -->
+                    <div class="textarea thumbnaila" id="textarea" contenteditable="true"></div>
+                    <div class="say-btn">
+                        <input type="button" class="btn btn-default face pull-left" value="表情" />
+                        <input type="submit" class="btn btn-default" value="发表" />
+                    </div>
+                <!-- </form> -->
+               <!-- <div>
+               &nbsp;&nbsp;&nbsp;&nbsp;<b>房间列表:</b>（当前在&nbsp;房间<?php echo isset($_GET['room_id'])&&intval($_GET['room_id'])>0 ? intval($_GET['room_id']):1; ?>）<br>
+               &nbsp;&nbsp;&nbsp;&nbsp;<a href="/?room_id=1">房间1</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="/?room_id=2">房间2</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="/?room_id=3">房间3</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="/?room_id=4">房间4</a>
+               <br><br>
+               </div> -->
+	        </div>
+	    </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+        <title>欢迎登录WebChat</title>
+        <link rel="stylesheet" href="../layui/css/layui.css">
+        <style type="text/css">
+            *{
+                margin: 0;
+                padding: 0;
+                font-family: "Microsoft YaHei";
+            }
+            em, cite{
+                font-size: 14px;
+                font-style: normal;
+            }
+            /* .layui-container{
+                background-color: #ffffff;
+            } */
+            body{
+                background: url(../chat/bg.png) repeat;
+                /* position: relative; */
+                /* width: 100 */
+                overflow-x: hidden;
+            }
+            body .layui-layim{
+                width: 260px;
+                height: 520px;
+                /* overflow: hidden; */
+                position: fixed;
+                /* display: none; */
+                right: 0;
+                bottom: 0;
+                background: white;
+                border-radius: 3px;
+                border: 1px solid #D9D9D9;
+            }
+            .layui-layim .layui-layim-user{
+                width: 260px;
+                height: 102px;
+                padding-top: 10px;
+                position: relative;
+                background-color: #F6F6F6;
+            }
+
+            .layim-chat .layui-layer-content{
+                padding: 0;
+                overflow: visible !important;
+            }
+            .layui-layim .layui-layim-main-info{
+                padding: 0 15px;
+                overflow: hidden;
+            }
+            .info-name, .info-ramark, .layim-content-friends li h5 span, .layim-friends-list li span, .layim-friends-list li p{
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .info-icon, .info-content{
+                float: left;
+            }
+            .info-content{
+                padding-top: 4px;
+            }
+            .info-icon img{
+                width: 50px;
+                margin-right: 10px;
+                border-radius: 50%;
+                border: solid 2px #F6F6F6;
+                cursor: pointer;
+            }
+            .info-icon img:hover{
+                border: solid 2px #009bdb;
+            }
+            .info-name{
+                max-width: 150px;
+                margin-right: 5px;
+                font-size: 16px;
+                display: inline-block;
+                vertical-align: top;
+            }
+            .info-status{
+                display: inline-block;
+                vertical-align: top;
+                /* float: left; */
+                /* display: block; */
+                width: 12px;
+                height: 12px;
+                /* top: 5px; */
+                /* right: 8px; */
+                border-radius: 50%;
+                /* position: absolute; */
+                margin-top: 5px;
+                border: none;
+                background-color: red;
+            }
+            .online{
+                background-color: #191;
+            }
+            .offline{
+                background-color: red;
+            }
+            /* .offline img{
+                -webkit-filter: grayscale(100%);
+                -moz-filter: grayscale(100%);
+                -ms-filter: grayscale(100%);
+                -o-filter: grayscale(100%);
+
+                filter: grayscale(100%);
+
+                filter: gray;
+            } */
+            .info-ramark{
+                margin-top: 5px;
+                font-size: 14px;
+            }
+            .info-ramark:hover{
+
+            }
+            .layui-layim-close2{
+                position: absolute;
+                top: 5px;
+                right: 10px;
+            }
+            .layui-layim-close2 a{
+                font-size: 20px;
+            }
+            .layui-layim-main-tab{
+                margin-top: 6px;
+                padding: 9px 0;
+                overflow: hidden;
+                /* border-bottom: solid 2px #cdcbca; */
+            }
+
+            .layui-layim-main hr{
+                background-color: #cdcbca;
+                margin: -2px 0 0 0;
+                height: 2px;
+            }
+
+            .layui-layim-main-tab li {
+                position: relative;
+                width: 33.33%;
+                height: 24px;
+                line-height: 24px;
+                font-size: 22px;
+                text-align: center;
+                color: rgba(0,0,0,.6);
+                cursor: pointer;
+                float: left;
+                display: inline-block;
+                vertical-align: top;
+            }
+            .layui-layim-main-tab .active::after{
+                content: '';
+                position: absolute;
+                left: 0;
+                bottom: -9px;
+                width: 100%;
+                height: 2px;
+                /* background-color: #3FDD86; */
+                background-color: #8b877e;
+            }
+            .layui-layim-content{
+                padding: 0 0 10px 0;
+                height: 369px;
+                overflow-y: scroll;
+
+                border-bottom: solid 1px #cdcbca;
+            }
+            .layui-layim-content[lay-type='off']::-webkit-scrollbar{
+            	display: none;
+            }
+            .layui-layim-content[lay-type='on']::-webkit-scrollbar{
+            	display: block;
+            	width: 6px;     /*高宽分别对应横竖滚动条的尺寸*/
+            	height: 1px;
+            }
+            .layui-layim-content:hover::-webkit-scrollbar-thumb{
+            	border-radius: 5px;
+            	background: #bababa;
+            }
+            .layui-layim-content ul{
+                display: none;
+            }
+            .layui-layim-content .active{
+                display: block;
+            }
+            .layim-content-friends li h5 {
+                /* margin: 0 15px 0 0; */
+                position: relative;
+                padding: 0 10px;
+                height: 28px;
+                line-height: 28px;
+                /* cursor: pointer; */
+                font-size: 0;
+                white-space: nowrap;
+                overflow: hidden;
+            }
+            .layim-content-friends li h5 span{
+                user-select: none;
+                font-size: 14px;
+                max-width: 125px;
+                margin-left: 5px;
+            }
+            .layim-content-friends li h5 *{
+                display: inline-block;
+                vertical-align: top;
+            }
+            .layim-content-friends li h5 input{
+                width: 200px;
+                height: 20px;
+                margin: 2px 0;
+                font-size: 12px;
+                padding: 0 5px;
+            }
+            .layim-friends-group.active{
+                background-color: #e0dfde;
+            }
+            .layim-friends-list{
+                display: none;
+                user-select: none;
+            }
+            .layim-friends-list.active{
+                display: block;
+            }
+            .layim-friends-list li {
+                position: relative;
+                height: 42px;
+                padding: 5px 15px 5px 60px;
+                font-size: 0;
+                /* cursor: pointer; */
+            }
+            .layim-friends-list li:hover{
+                background-color: #e0dfde;
+            }
+            .layim-friends-user.active{
+                background-color: #d6d5d4;
+            }
+            .layim-friends-list li * {
+                display: inline-block;
+                vertical-align: top;
+                font-size: 14px;
+            }
+            .layim-friends-list li img{
+                position: absolute;
+                left: 15px;
+                top: 8px;
+                width: 36px;
+                height: 36px;
+                border-radius: 100%;
+            }
+            .layim-friends-list li span{
+                margin-top: 4px;
+                max-width: 155px;
+            }
+            .layim-friends-list li p{
+                display: block;
+                line-height: 18px;
+                font-size: 12px;
+                color: #999;
+            }
+            .layui-layim-tool{
+                height: 30px;
+                background-color: #F6F6F6;
+            }
+            .layim-chat .layui-layer-setwin .layui-layer-max{
+                display: none;
+            }
+            .layim-chat .layui-layer-title{
+                height: 60px;
+                border: none;
+            }
+            .layim-chat-min{
+                cursor: pointer;
+            }
+            .layim-chat-list{
+                background-color: #d8d8d8;
+                float: left;
+                width: 200px;
+                height: 720px;
+                top: -60px;
+                z-index: 19780000;
+                display: inline-block;
+                vertical-align: top;
+                position: relative;
+                overflow-y: scroll;
+                font-size: 0;
+            }
+            .layim-chat-list[lay-type='off']::-webkit-scrollbar{
+            	display: none;
+            }
+            .layim-chat-list[lay-type='on']::-webkit-scrollbar{
+            	display: block;
+            	width: 6px;     /*高宽分别对应横竖滚动条的尺寸*/
+            	height: 1px;
+            }
+            .layim-chat-list:hover::-webkit-scrollbar-thumb{
+            	border-radius: 5px;
+            	background: #bababa;
+            }
+            .layim-chat-list li{
+                position: relative;
+                margin: 5px;
+                padding: 5px 30px 5px 5px;
+                line-height: 28px;
+                /* cursor: pointer; */
+                border-radius: 3px;
+                user-select: none;
+                cursor: default;
+            }
+            .layim-chat-list li:hover{
+                background-color: #e2e2e2e2;
+            }
+            .layim-chat-list li:hover i{
+                display: inline-block;
+            }
+            .layim-chat-list li.active{
+                background-color: #fafafa;
+            }
+            .layim-chat-list li.onmsg{
+            	/* background-color: #ac6730; */
+            	animation:messagea 5s;
+            	-moz-animation:messagea 5s; /* Firefox */
+            	-webkit-animation:messagea 5s; /* Safari and Chrome */
+            	-o-animation:messagea 5s; /* Opera */
+            	animation-iteration-count:infinite;/*5;*/
+            	animation-timing-function:linear;
+            }
+            @keyframes messagea{
+            	0%   { background:rgba(0,0,0,0.1); }
+            	20%  { background:rgba(0,0,0,0.1); }
+            	40%  { background:rgba(0,0,0,0.3); }
+            	60%  { background:rgba(0,0,0,0.5); }
+            	80%  { background:rgba(0,0,0,0.3); }
+            	100% { background:rgba(0,0,0,0.1); }
+            }
+            /* Firefox */
+            @-moz-keyframes messagea{
+            	0%   { background:rgba(0,0,0,0.1); }
+            	20%  { background:rgba(0,0,0,0.1); }
+            	40%  { background:rgba(0,0,0,0.3); }
+            	60%  { background:rgba(0,0,0,0.5); }
+            	80%  { background:rgba(0,0,0,0.3); }
+            	100% { background:rgba(0,0,0,0.1); }
+            }
+            /* Safari and Chrome */
+            @-webkit-keyframes messagea{
+            	0%   { background:rgba(0,0,0,0.1); }
+            	20%  { background:rgba(0,0,0,0.1); }
+            	40%  { background:rgba(0,0,0,0.3); }
+            	60%  { background:rgba(0,0,0,0.5); }
+            	80%  { background:rgba(0,0,0,0.3); }
+            	100% { background:rgba(0,0,0,0.1); }
+            }
+            /* Opera */
+            @-o-keyframes messagea{
+            	0%   { background:rgba(0,0,0,0.1); }
+            	20%  { background:rgba(0,0,0,0.1); }
+            	40%  { background:rgba(0,0,0,0.3); }
+            	60%  { background:rgba(0,0,0,0.5); }
+            	80%  { background:rgba(0,0,0,0.3); }
+            	100% { background:rgba(0,0,0,0.1); }
+            }
+            .layim-chat-list li i{
+                position: absolute;
+                cursor: default;
+                display: none;
+                top: 5px;
+                right: 5px;
+                font-size: 22px;
+                color: #555555;
+            }
+            .layim-chat-list li i:hover{
+                color: #c00c00;
+            }
+            .layim-chat-icon .layim-chat-tips{
+                display: table;
+                font-size: 12px;
+                position: absolute;
+                width: 10px;
+                bottom: 1px;
+                left: 44px;
+                color: #999999;
+            }
+            /* .layim-chat-icon .layim-chat-tips.draft{
+                color: red;
+            } */
+            .layim-chat-icon .layim-chat-tips em{
+                color: red;
+            }
+            .layim-chat-icon .layim-chat-tips span{
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100px;
+                display: inline-block;
+                position: fixed;
+            }
+            .layim-chat-main{
+                float: left;
+                width: 700px;
+                position: relative;
+                /* top: -60px; */
+            }
+            .layim-chat-main > li{
+                display: none;
+                width: 700px;
+                height: 660px;
+                position: relative;
+            }
+            .layim-chat-main li.active{
+                display: inline-block;
+            }
+            .layim-chat-main .layim-friend-name{
+                position: absolute;
+                top: -52px;
+                left: 10px;
+                max-width: 250px;
+            }
+            .layim-friend-name *{
+                user-select: none;
+            }
+            .layim-friend-name img{
+                margin-left: 10px;
+            }
+            .layim-friend-name p{
+                padding-left: 10px;
+                font-size: 18px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 200px;
+                display: inline-block;
+                vertical-align: top;
+                cursor: pointer;
+            }
+            .layim-friend-name p:hover{
+                text-decoration: underline;
+            }
+            .layim-friend-name .layim-friend-signature{
+                font-size: 14px;
+                max-width: 200px;
+                cursor: default;
+            }
+            .layim-friend-name p+p:hover{
+                text-decoration: none;
+            }
+            .layim-friend-log{
+                width: 660px;
+                height: 480px;
+                position: relative;
+                border-top: 1px solid #e0e0e0;
+                background-color: #F8F8F8;
+                padding: 0 20px;
+                overflow-y: scroll;
+            }
+            .layim-friend-log > li{
+                width: 100%;
+                float: left;
+                margin: 10px 0;
+            }
+            .layim-friend-log img{
+                width: 30px !important;
+                height: 30px !important;
+            }
+            .layim-friend-log .user_content p{
+                max-width: 300px;
+                word-wrap: break-word;
+                word-break: break-all;
+                white-space: unset;
+                margin: 0 10px;
+                padding: 10px;
+                position: relative;
+                overflow: unset;
+                border-radius: 3px;
+            }
+            .layim-friend-log .user_content p:after{
+                display: block;
+                width: 0;
+                height: 0;
+                border-style: solid;
+                position: absolute;
+                top: 10px;
+                content: " ";
+            }
+            .layim-friend-log .user_content.right > *{
+                float: right;
+            }
+            .layim-friend-log .user_content.left > *{
+                float: left;
+            }
+            .layim-friend-log .user_content.left > p{
+                background-color: #ffffff;
+            }
+            .layim-friend-log .user_content.left > p:after{
+                left: -5px;
+                border-width: 5px 5px 5px 0;
+                border-color: transparent #ffffff transparent transparent;
+            }
+            .layim-friend-log .user_content.right > p{
+                background-color: #9eea6a;
+            }
+            .layim-friend-log .user_content.right > p:after{
+                right: -5px;
+                border-width: 5px 0 5px 5px;
+                border-color: transparent transparent transparent #9eea6a;
+            }
+            .layim-friend-box{
+                border-top: 1px solid #e0e0e0;
+                height: 179px;
+            }
+            .layim-friend-box .layim-box-emoticon{
+                height: 30px;
+            }
+            .layim-friend-box .layim-box-tools{
+                padding: 0 10px;
+            }
+            .layim-friend-box .layim-box-tools i{
+                font-size: 24px;
+            }
+            .layim-friend-box .layim-box-textarea{
+                width: 689px;
+                height: 100px;
+                overflow-y: scroll;
+                outline: none;
+                padding: 0 0px 0 11px;
+                word-break: break-all;
+                margin: 5px 0;
+            }
+            .layim-friend-box .layim-box-textarea::-webkit-scrollbar{
+            	display: block;
+            	width: 6px;     /*高宽分别对应横竖滚动条的尺寸*/
+            	height: 1px;
+            }
+            .layim-friend-box .layim-box-textarea::-webkit-scrollbar-thumb{
+            	border-radius: 5px;
+            	background: #bababa;
+            }
+            .layim-friend-box .layim-box-textarea img{
+                width: auto;
+                border-radius: unset;
+                height: auto;
+                border: solid 1px #ffffff;
+                float: none;
+            }
+            .layim-friend-box .layim-box-textarea img.active{
+                border: solid 1px #000000;
+            }
+            .layim-friend-box .layim-box-resize{
+                cursor: n-resize;
+                height: 5px;
+                width: 700px;
+            }
+            .layim-friend-box .layim-box-enter{
+                height: 40px;
+            }
+            .layim-friend-box .layim-box-enter button{
+                height: 32px;
+                float: right;
+                width: 80px;
+                font-size: 16px;
+                background-color: #33DF83;
+                margin: 0 8px;
+                line-height: 32px;
+            }
+            body .layui-layim-min{
+                width: 135px;
+                height: 50px;
+                overflow: hidden;
+                display: none;
+                background-color: #ffffff;
+                border: 1px solid #D9D9D9;
+                position: fixed;
+                float: right;
+                right: 0px;
+                bottom: 0px;
+                cursor: pointer;
+                user-select: none;
+                border-radius: 2px;
+                box-shadow: 1px 1px 50px rgba(0,0,0,.3);
+            }
+            .layim-chat-min .layui-layer-content{
+                /* margin: 0 5px; */
+                padding: 5px 10px;
+                position: relative;
+            }
+            .layui-layer-content img{
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                float: left;
+            }
+            .layui-layer-content p{
+                padding-left: 10px;
+                font-size: 16px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: clip;
+                max-width: 99px;
+                display: inline-block;
+            }
+            /* 菜单 */
+            .layim-tips{
+                min-width: auto !important;
+                width: 150px !important;
+            }
+            .layim-tips .layui-layer-content{
+                padding: 5px !important;
+                margin: 1px;
+            }
+            .menu-list div{
+                user-select: none;
+            }
+            .menu:hover{
+                background-color: #ccc;
+                /* user-select: none; */
+            }
+        </style>
+        <script type="text/javascript" src="js/jquery.min.js"></script>
+        <script src="../layui/layui.js"></script>
+        <script type="text/javascript">
+            let log = console.log.bind(console);
+            layui.use(['layer', 'form'], function(){
+                var layer   = layui.layer,
+                    form    = layui.form,
+                    element = layui.element;
+                // 如果浏览器不支持websocket，会使用这个flash自动模拟websocket协议，此过程对开发者透明
+                WEB_SOCKET_SWF_LOCATION = "/swf/WebSocketMain.swf";
+                // 开启flash的websocket debug
+                WEB_SOCKET_DEBUG = true;
+                var ws;
+
+                $(document).ready(function(){
+                    connect();
+                });
+
+                var user = decodeURIComponent(decodeURIComponent(document.cookie));
+                user = JSON.parse(user.substr(11));
+                // user = user;
+
+                // 连接服务端
+                function connect() {
+                    // 创建websocket
+                    ws = new WebSocket("ws://"+document.domain+":7272");
+                    // 当socket连接打开时，输入用户名
+                    // ws.onopen = onopen;
+                    // 当有消息时根据消息类型显示不同信息
+                    ws.onmessage = onmessage;
+                    ws.onclose = onclose;
+                    ws.onerror = function() {
+                      console.log("出现错误");
+                    };
+                }
+                // 服务端发来消息时
+                function onmessage(e){
+                    var data = JSON.parse(e.data);
+                    // console.log(data);
+                    switch(data['type']){
+                        // 服务端ping客户端
+                        case 'ping':
+                            // if(sessionStorage.getItem('user_id') && sessionStorage.getItem('user_name')){
+                                ws.send('{type: "pong"}');
+                            // }
+                            break;
+                        // 服务端注册客户端ID
+                        case 'init':
+                            // log(data);
+                           // setClient(data['client_id']);
+                           $.post('http://worker.bmf.com/user/bind', {client_id: data['client_id']}, function(res){
+                                $(".layui-layim-main-info").find("img").attr("src",res['data']['avatar']);
+                                $(".layui-layim-main-info").find("div.info-name").text(res['data']['name']);
+                                $(".layui-layim-main-info").find("div.info-ramark").text(res['data']['sign']);
+                                log(res);
+                           }, 'json');
+                           break;
+                        // 登录 更新用户列表
+                        case 'login':
+                            $(".info-status").removeClass('offline').addClass('online');
+                            break;
+                        // 发言
+                        case 'say':
+                            var to_user_id;
+                            var float;
+                            if(user['id'] === data['from_user_id']){
+                                to_user_id = data['to_user_id'];
+                                float = "right";
+                            }else{
+                                to_user_id = data['from_user_id'];
+                                float = "left";
+                            }
+                            var friend_id = 'layim-friend' + to_user_id + '-chat',
+                                class_name = $("#" + friend_id).attr('class');
+                            // 判断是否当前选中聊天框
+                            if(typeof(class_name) !== "undefined"){
+                                if(class_name.indexOf('user_active') < 0){
+                                    $('#layim-friend' + to_user_id + '-icon').addClass('onmsg');
+                            //         $("#" + friend_id).find('span.nickname').addClass('onmsg');
+                            //         $("#" + friend_id).find('p.user_signature').addClass('onmsg');
+                                    $('#layim-friend' + to_user_id + '-chat').children(".layim-friend-log").append('<li id="' + data['say_id'] + '" class="speech_item"><div class="user_content ' + float + '"><img src="'+ data['from_user_icon'] +'" class="user_icon" /><p class="triangle-isosceles top">'+ data['content'] +'</p></div></li>');
+                                }
+                            }
+                            // log(data);
+                            // say(data);
+                            break;
+                        // 用户退出 更新用户列表
+                        case 'logout':
+                            $("#user_state").removeClass('online').addClass('offline');
+                        // 账户在其他地方登录
+                        case 'loginclash':
+                            // say(data);
+                            log(data);
+                            $("#user_state").removeClass('online').addClass('offline');
+                            sessionStorage.removeItem('user_id');
+                            sessionStorage.removeItem('user_name');
+                            sessionStorage.removeItem('client_id');
+                            // 账户在其他地方登录
+                        case 'friend_online':
+                            var friend_id = 'user'+ data['from_user_id'];
+                            var html_this = '<li id="' + friend_id + '" class="user_info">' + $("#" + friend_id).html() + '</li>';
+
+                            $("#" + friend_id).remove();
+                            $("#user_online").append(html_this);
+                            $("#" + friend_id).children("div.user_state").attr('id',data['from_client_id']);
+                            $("#" + friend_id).children("div.user_state").removeClass('offline').addClass('online');
+                            break;
+                        case 'friend_offline':
+                            var friend_id = data['from_client_id'];
+                            var parent_id = $("#" + friend_id).parent().attr('id');
+                            var html_this = '<li id="' + parent_id + '" class="user_info">' + $("#" + parent_id).html() + '</li>';
+
+                            $("#" + parent_id).remove();
+                            $("#user_offline").append(html_this);
+                            $("#" + friend_id).removeClass('online').addClass('offline');
+                            break;
+                    }
+
+                }
+                // 服务端连接关闭
+                function onclose(){
+                    $(".info-status").removeClass('online').addClass('offline');
+                    setTimeout(function(){
+                        connect();
+                    }, 2000);
+                }
+                // 获取好友列表
+                $.get('http://worker.bmf.com/user/info', function(res){
+                    var friend = res.data.friend,
+                        i = 0;
+                    if(res.code == 200){
+                        $(".layim-content-friends").html(' ');
+                        for(var p in friend){
+                            i += 1;
+                            var html = '<li class="layim-group group_' + i + '">' +
+                                            '<h5 class="layim-friends-group" lay-type="false">' +
+                                                '<i class="layui-icon layui-icon-right"></i>' +
+                                                '<span>' + friend[p].name + '</span>' +
+                                            '</h5>' +
+                                            '<ul class="layim-friends-list">';
+
+                            for(var z in friend[p].list){
+                                html += '<li id="layim-friend' + friend[p].list[z].id + '" class="layim-friends-user" draggable="true">' +
+                                            '<img src="' + friend[p].list[z].avatar_url + '">' +
+                                            '<span title="' + friend[p].list[z].nickname + '">' + friend[p].list[z].nickname + '</span>' +
+                                            '<p title="' + friend[p].list[z].signature + '">' + friend[p].list[z].signature + '</p>' +
+                                        '</li>';
+                            }
+                            html += '</ul></li>';
+                            $(".layim-content-friends").append(html);
+                        }
+                    }
+                }, 'json');
+                // 界面切换
+                $(".layui-layim-close1").on('click', function(){
+                    $(".layui-layim-min").hide();
+                    $(".layui-layim").addClass('layui-anim layui-anim-up').css("display","block");
+                });
+                $(".layui-layim-close2").on('click', function(){
+                    $(".layui-layim").hide();
+                    $(".layui-layim-min").addClass('layui-anim layui-anim-up').css("display","block");
+                });
+                // 列表选中切换效果
+                $(".layui-layim-main-tab li").on('click', function(){
+                    var num = $(this).index();
+                    $(this).addClass("active").siblings().removeClass("active");
+                    // log(num);
+                    $(".layui-layim-content").children().eq(num).addClass("active").siblings().removeClass("active");
+                });
+                // 好友列表分组选中切换效果
+                $(".layim-content-friends").on('click', '.layim-friends-group', function(){//
+                    // remove_user_select();
+                    var lay_type = $(this).attr("lay-type");
+                    $(this).removeClass("active");
+                    if(lay_type !== 'select'){
+                        if(lay_type === 'true'){
+                            $(this).children("i").removeClass("layui-icon-down").addClass("layui-icon-right");
+                            $(this).attr("lay-type","false");
+                            $(this).siblings("ul").removeClass('active');
+                        }else{
+                            $(this).children("i").removeClass("layui-icon-right").addClass("layui-icon-down");
+                            $(this).attr("lay-type",'true');
+                            $(this).siblings("ul").addClass('active');
+                        }
+                        // 取消好友选中效果
+                        $(this).parents('ul.layim-content-friends').find('li.layim-friends-user').removeClass('active');
+                        // 计算内容高度
+                        var content_height = $(".layui-layim-content").height(),
+                            friends_height = $(".layim-content-friends").height();
+                        if(content_height > friends_height){
+                            $(".layui-layim-content").attr('lay-type','off');
+                        }else{
+                            $(".layui-layim-content").attr('lay-type','on');
+                        }
+                    }
+                });
+                // 好友列表分组hover效果
+                $(".layim-content-friends").on('mouseover', '.layim-friends-group', function(){
+                    var lay_type = $(this).attr("lay-type");
+                    if(lay_type === 'false'){
+                        $(this).addClass("active").parent().siblings().children('h5').removeClass("active");
+                    }
+                });
+                $(".layim-content-friends").on('mouseout', '.layim-friends-group', function(){
+                    $(this).removeClass("active");
+                });
+                // 好友单击选中效果
+                $(".layim-content-friends").on('click', '.layim-friends-user', function(){
+                    $(this).addClass('active').siblings().removeClass('active');
+                    $(this).parents('li').siblings().find('li.layim-friends-user').removeClass('active');
+                });
+                // 好友双击效果
+                $(".layim-content-friends").on('dblclick', '.layim-friends-user', function(){
+                    var num   = $(".layui-layer-page").length,
+                        state = $(".layim-chat").css('display'),
+                        index = $(".layim-chat-min").attr('times'),
+                        uid   = $(this).attr('id'),
+                        icon  = $(this).children('img').attr('src'),
+                        name  = $(this).children('span').attr('title'),
+                        signature = $(this).children('p').attr('title'),
+                        html_icon  = '<li id="' + uid + '-icon" class="layim-chat-icon active"><img src="' + icon + '"/><p title="' + name + '">' + name + '</p><p class="layim-chat-tips"></p><i class="layui-icon layui-icon-close-fill"></i></li>',
+                        html_chat  = '<li id="' + uid + '-chat" class="layim-chat-logs active">' +
+                                          '<div class="layim-friend-name">' +
+                                              '<img src="' + icon + '"/>' +
+                                              '<p>' + name + '</p>' +
+                                              '<p class="layim-friend-signature">' + signature + '</p>' +
+                                          '</div>' +
+                                          '<ul class="layim-friend-log"></ul>' +
+                                          '<div class="layim-friend-box">' +
+                                              '<div class="layui-form">' +
+                                                  '<div class="layim-box-emoticon">' +
+                                                      '<div class="layim-box-resize"></div>' +
+                                                      '<div class="layim-box-tools">' +
+                                                          '<i class="layui-icon layui-icon-face-smile-fine"></i>' +
+                                                          '<i class="layui-icon"></i>' +
+                                                          '<i class="layui-icon layui-icon-log"></i>' +
+                                                      '</div>' +
+                                                  '</div>' +
+                                                  '<div class="layim-box-textarea" contenteditable="true"></div>' +
+                                                  '<div class="layim-box-enter">' +
+                                                      '<button class="layui-btn layui-btn-normal" lay-submit lay-filter="formSay">发送</button>' +
+                                                  '</div>' +
+                                              '</div>' +
+                                          '</div>' +
+                                        '</li>',
+                        is_exist = $(".layim-chat-list").children("li#" + uid + '-icon').length;
+
+
+                    if(num < 1){
+                        layer.open({
+                          type: 1,
+                          shade: 0,
+                          title: ' ',
+                          area: ['700px','720px'],
+                          closeBtn: 1,
+                          maxmin: true,
+                          resize: false,
+                          id: 'layim-chat-content',
+                          skin: 'layim-chat layim-right-click',
+                          content: '<ul class="layim-chat-list" lay-type="false" style="display:none;">' + html_icon + '</ul><ul class="layim-chat-main">' + html_chat + '</ul>'
+                        });
+                        layer.min = function(indx, option){
+                            return false;
+                        };
+                    }else{
+                        var b_uid = $(".layim-chat-list").children("li.active").attr('id');
+                        if(b_uid !== undefined){
+                            b_uid = b_uid.substring(0,b_uid.length - 5);
+                            var text = $(".layim-chat-main").children("li#" + b_uid + "-chat").find("div.layim-box-textarea").text();
+                            if(text !== ''){
+                                var html = "<em>[草稿]</em><span>" + text + "</span>";
+                                $("#" + b_uid + "-icon").children("p.layim-chat-tips").html(html).addClass("draft");
+                            }
+                        }
+                        if(state === 'none'){
+                            $(".layim-chat").css('display','block');
+                            layer.close(index);
+                        }
+                        if(is_exist < 1){
+                            $("#layim-chat-content").children("ul.layim-chat-list").append(html_icon);
+                            $("#layim-chat-content").children("ul.layim-chat-main").append(html_chat);
+                            $(".layim-chat-main").find("div.layim-friend-name").children("img").css('display','none');
+                        }else{
+                            $("#" + uid + "-icon").addClass("active");
+                            $("#" + uid + "-chat").addClass("active");
+                        }
+                    }
+                    // 判断数量来修改聊天框的宽度
+                    var f_length = $(".layim-chat-list").children().length;
+                    if(f_length > 1){
+                        $(".layim-chat-list").css('display','block');
+                        $(".layim-chat").css('width','900px');
+                        $(".layim-chat-main").find("p.layim-friend-signature").css("display",'table');
+                    }
+                    // 取消选中聊天框内其他好友头像
+                    $("#" + uid + "-icon").siblings().removeClass("active");
+                    $("#" + uid + "-chat").siblings().removeClass("active");
+                    // 计算内容高度
+                    var content_height = $(".layim-chat-list").children().length;
+                    if(content_height > 9){
+                        $(".layim-chat-list").attr('lay-type','on');
+                    }else{
+                        $(".layim-chat-list").attr('lay-type','off');
+                    }
+
+                    $("#" + uid + "-chat").find("div.layim-box-textarea").focus();
+                });
+                // 聊天框内选中好友头像切换效果
+                $(document).on('click', '.layim-chat-icon', function(){
+                    var a_uid = $(this).attr('id'),
+                        b_uid = $(this).siblings('.active').attr('id');
+
+                    a_uid = a_uid.substring(0,a_uid.length-5);
+                    if(b_uid !== undefined){
+                        b_uid = b_uid.substring(0,b_uid.length - 5);
+                        var text = $(".layim-chat-main").children("li#" + b_uid + "-chat").find("div.layim-box-textarea").html(),
+                            result = text.replace(/<img class="layim-chat-img" src=\"(.*?)\">/gi, "[图片]");
+                        if(text !== ''){
+                            var html = "<em>[草稿]</em><span>" + result + "</span>";
+                            $("#" + b_uid + "-icon").children("p.layim-chat-tips").html(html).addClass("draft");
+                        }
+                    }
+                    $(this).addClass('active').siblings().removeClass('active');
+                    $("#" + a_uid + "-chat").addClass('active').siblings().removeClass('active');
+                    $("#" + a_uid + "-chat").find("div.layim-box-textarea").focus();
+                    $("#" + a_uid + "-icon").children("p.layim-chat-tips").text("").removeClass("draft");
+
+                });
+                // 聊天框缩小按钮
+                $(document).on('click', '.layui-layer-min', function(){
+                    $(".layim-chat").css('display','none');
+                    var img_src = $(".layim-chat").find('li.layim-chat-icon.active').children('img').attr('src'),
+                        num = $(".layim-chat-min").length;
+                    if(num < 1){
+                        layer.open({
+                            type: 1,
+                            shade: 0,
+                            anim: 2,
+                            title: false,
+                            closeBtn: 0,
+                            resize: false,
+                            offset: 'b',
+                            skin: 'layim-chat-min',
+                            content: '<img src="' + img_src + '"/>'
+                        });
+                    }
+                });
+                // 聊天框放大
+                $(document).on('click', '.layim-chat-min', function(){
+                    var index = $(".layim-chat-min").attr('times');
+                    layer.close(index);
+
+                    $(".layim-chat").css('display','block');
+                });
+                // 聊天框内取消按钮
+                $(document).on('click', '.layui-icon-close-fill', function(){
+                    var y_name = $(this).parent().attr('class'),
+                        s_name = y_name.substring(0,15),
+                        length = $(this).parent().siblings().length,
+                        num    = $(this).parent().index(),
+                        uid    = $(this).parent().attr('id'),
+                        index  = $(".layim-chat").attr('times');
+                        uid    = uid.substring(0,uid.length-5);
+
+                    if(s_name == "layim-chat-icon"){
+                        $("ul.layim-chat-list").children("li#" + uid + "-icon").remove();
+                        $("ul.layim-chat-main").children("li#" + uid + "-chat").remove();
+                        var is_exist = $("ul.layim-chat-list").children().hasClass("active");
+                        if(length !== num && num < length){
+                            uid = num;
+                        }else if(length == num && length != 0){
+                            uid = length - 1;
+                        }else if(length == num && length == 0){
+                            is_exist = true;
+                            layer.close(index);
+                        }
+                        if(!is_exist){
+                            uid = $("ul.layim-chat-list").children("li:eq(" + uid + ")").attr('id');
+                            uid = uid.substring(0,uid.length-5);
+                            $("ul.layim-chat-list").children("li#" + uid + "-icon").addClass('active');
+                            $("ul.layim-chat-main").children("li#" + uid + "-chat").addClass('active');
+                        }
+
+                        if(length < 2){
+                            $(".layim-chat").css('width','700px');
+                            $(".layim-chat-list").css("display","none");
+                            $(".layim-chat-main").find("div.layim-friend-name").children("img").css("display","block");
+                            $(".layim-chat-main").find("p.layim-friend-signature").css("display",'inline-block');
+                        }
+                        // 计算内容高度
+                        var content_height = $(".layim-chat-list").children().length;
+                        if(content_height > 9){
+                            $(".layim-chat-list").attr('lay-type','on');
+                        }else{
+                            $(".layim-chat-list").attr('lay-type','off');
+                        }
+                    }
+                });
+                //////////////////////////////////////////////////////////////////////////////////////
+                // 边框可移动效果
+                var src_posi_Y = 0, dest_posi_Y = 0, move_Y = 0, is_mouse_down = false, destHeight = 105;
+                $(document).on('mousedown', ".layim-box-resize", function(e){
+                    src_posi_Y = e.pageY;//鼠标指针的位置
+                    is_mouse_down = true;
+                });
+                $(document).bind("click mouseup",function(e){
+                    if(is_mouse_down){
+                      is_mouse_down = false;
+                    }
+                }).mousemove(function(e){
+                    dest_posi_Y = e.pageY;
+                    move_Y = src_posi_Y - dest_posi_Y;
+                    src_posi_Y = dest_posi_Y;
+                    destaHeight = $(".layim-box-textarea").height() + move_Y;
+                    destbHeight = $(".layim-friend-log").height() - move_Y;
+                    if(is_mouse_down && destaHeight < 286 && destbHeight > 299){
+                        $(".layim-box-textarea").css("height", destaHeight > 100 ? destaHeight : 100);
+                        $(".layim-friend-log").css("height", destbHeight < 480 ? destbHeight : 480);
+                    }
+                });
+                /////////////////////////////////////////////////////////////////////////////////
+                // 图片复制粘贴效果
+                // document.addEventListener('paste', function (event) {
+                //     var isChrome = false;
+                //     if (event.clipboardData || event.originalEvent) {
+                //         //某些chrome版本使用的是event.originalEvent
+                //         var clipboardData = (event.clipboardData || event.originalEvent.clipboardData);
+                //         if(clipboardData.items){
+                //             // for chrome
+                //             var items = clipboardData.items,
+                //                 len = items.length,
+                //                 blob = null;
+                //                 isChrome = true;
+                //
+                //             for (var i = 0; i < len; i++) {
+                //                 if(items[i].type.indexOf("image") !== -1){
+                //                     event.preventDefault();
+                //                     //getAsFile() 此方法只是living standard firefox ie11 并不支持
+                //                     blob = items[i].getAsFile();
+                //                 }
+                //             }
+                //             if(blob !== null){
+                //                 var blobUrl = URL.createObjectURL(blob);
+                //                 // var html = '<img class="layim-chat-img" src="' + blobUrl + '" />';
+                //                 // $(".layim-chat-main").children("li.layim-chat-logs.active").find('div.layim-box-textarea').append(html);
+                //                 //base64码显示
+                //                 var reader = new FileReader();
+                //                 reader.onload = function (event) {
+                //                     // event.target.result 即为图片的Base64编码字符串
+                //                     var base64_str = event.target.result;
+                //                     var html = '<img class="layim-chat-img" src="' + base64_str + '" />';
+                //                     $(".layim-chat-main").children("li.layim-chat-logs.active").find('div.layim-box-textarea').append(html);
+                //                 }
+                //                 reader.readAsDataURL(blob);
+                //             }
+                //         }
+                //     }
+                // });
+                // $(document).on('keyup', '.layim-box-textarea', function(){
+                //     $(".layim-box-textarea").focus(); //解决ff不获取焦点无法定位问题
+                // });
+                // 图片点击效果
+                $(document).on('click','img.layim-chat-img',function(e){
+                    //如果提供了事件对象，则这是一个非IE浏览器
+                    if (e && e.stopPropagation) {
+                        //因此它支持W3C的stopPropagation()方法
+                        e.stopPropagation();
+                    }else{
+                        //否则，我们需要使用IE的方式来取消事件冒泡
+                        window.event.cancelBubble = true;
+                        return false;
+                    }
+                    var img_active = $(this).attr('class');
+                    var nowImg = $(this)[0]
+                    if(!nowImg.classList.contains('active')){
+                        $(this).addClass("active");
+                        $(this).siblings().removeClass("active");
+                    }
+                });
+                // 图片失焦事件
+                $(document).on('click',function(event){
+                    $(".layim-chat-main").find("img.layim-chat-img").removeClass('active');
+                });
+                /////////////////////////////////////////////////////////////////////////////////
+                // div拖动效果
+                document.addEventListener('dragstart', function(event){
+                    event.dataTransfer.setData("Text",event.target.id);
+                });
+                document.addEventListener('dragover', function(event){
+                    event.preventDefault();
+                    $(".layim-group").children("h5").attr("lay-type","false");
+                    $(".layim-group").children("ul.layim-friends-list").removeClass("active");
+
+                    $(".layim-group").find("i.layui-icon").removeClass("layui-icon-down").addClass("layui-icon-right");
+                    // 取消好友选中效果
+                    $(".layim-group").find('li.layim-friends-user').removeClass('active');
+                    // 计算内容高度
+                    var content_height = $(".layui-layim-content").height(),
+                        friends_height = $(".layim-content-friends").height();
+                    if(content_height > friends_height){
+                        $(".layui-layim-content").attr('lay-type','off');
+                    }else{
+                        $(".layui-layim-content").attr('lay-type','on');
+                    }
+                });
+                document.addEventListener('drop', function(event){
+                    event.preventDefault();
+                    var data = event.dataTransfer.getData("Text"),
+                        class_name = event.target.parentNode.className;
+                        class_name = class_name.split(" ");
+                        if(class_name[0] === "layim-group"){
+                            var this_a = $(".layim-content-friends").children("li." + class_name[1]);
+                            this_a.children("ul").append(document.getElementById(data)).addClass("active");
+                            this_a.children("h5").attr("lay-type","true");
+                            this_a.find("i.layui-icon").removeClass("layui-icon-right").addClass("layui-icon-down");
+                        }
+                });
+                /////////////////////////////////////////////////////////////////////////////////
+                // 回车键发送消息
+                $(document).on('keydown', function(event){
+                    var event = event || window.event || arguments.callee.caller.arguments[0];
+                    if(event && event.keyCode == 13){ // enter 键
+                        $("#layim-chat-content").children("ul.layim-chat-main").children('li.layim-chat-logs.active').find("button.layui-btn-normal").click();
+                        event.preventDefault();
+                    }
+                });
+                //对话提交
+                form.on('submit(formSay)', function(data){
+                    var log_html = $(this).parent('div.layim-box-enter').siblings('div.layim-box-textarea').html();
+                    // var inputValue = html.replace(/\s*/g,"");
+                    if(log_html.length == 0 || log_html == null){
+                        var length = $(".layui-layer-tips").length;
+                        if(length < 1){
+                            layer.tips('不能发送空白消息', '.layui-btn-normal', {
+                                tips: [1, '#0FA6D8'] //还可配置颜色
+                            });
+                        }
+                        $(this).parent('div.layim-box-enter').siblings('div.layim-box-textarea').html('');
+                        return false;
+                    }
+                    var to_user_id = $("#layim-chat-content").children("ul.layim-chat-main").children('li.layim-chat-logs.active').attr("id");
+                    to_user_id = to_user_id.split("-");
+                    to_user_id = to_user_id[1].substr(6);
+
+                    if(typeof(to_user_id) == "undefined"){
+                        layer.msg('请选择好友');
+                        return false;
+                    }
+
+                    $.post('/user/say',{//http://worker.bmf.com
+                            type: 'say',
+                            // client_id: sessionStorage.getItem('client_id'),
+                            to_user_id: to_user_id,
+                            // user_id: user_id,
+                            // user_icon: sessionStorage.getItem('user_icon'),
+                            content: log_html//$("#textarea").html().replace(/"/g, '\\"').replace(/\n/g,'\\n').replace(/\r/g, '\\r'),
+                        }, function(res){
+                            // log(res);
+
+
+                            // if(res.code !== 200){
+                            //     $("#" + res.data).children('div.user_content').append('<span class="msg_error" title="' + res.msg + '"><i class="fa fa-exclamation-circle"></i></span>');
+                            // }
+                            // $(".layim-friend-log").append('<li id="' + res['say_id'] + '" class="speech_item"><div class="user_content left"><img src="'+ res['from_user_icon'] +'" class="user_icon" /><p class="triangle-isosceles top">'+ res['content'] +'</p></div></li>');
+                        }, 'json'
+                    );
+                    // return false;
+                    $(this).parent('div.layim-box-enter').siblings('div.layim-box-textarea').html('');
+                    $(this).parent('div.layim-box-enter').siblings('div.layim-box-textarea').focus();
+
+                    return false;
+                });
+                // //////////////////////////////////////////////////////////
+                $(document).on('contextmenu', '.layim-right-click', function(e){
+                    e.preventDefault();
+                    var th_is = e.target,
+                        yes_html,
+                        group_html = '<div class="menu-list"><div class="menu group-add">添加分组</div><div class="menu group-rename">重命名</div></div>',
+                        friend_icon_html = '<div class="menu-list"><div class="menu friend-chat-send">发送消息</div><div class="menu friend-info">查看资料</div><div class="menu friend-chatlog">消息记录</div><div class="menu friend-del">删除好友</div><div class="menu friend-report">举报此用户</div></div>',
+                        friend_chat_html = '<div class="menu-list"><div class="menu friend-top">置顶</div><div class="menu friend-chat-no-bb">消息免打扰</div></div>';
+                    if(th_is.className == ""){
+                        th_is = e.target.parentNode;
+                    }
+                    // log(th_is);
+                    if(th_is.className.indexOf("layim-friends-group") !== -1){
+                        remove_user_select();
+                        yes_html = group_html;
+                        th_is.classList.add('right-click-select');
+                    }else if(th_is.className.indexOf("layim-chat-icon") !== -1){
+                        yes_html = friend_chat_html;
+                        th_is.classList.add('right-click-select');
+                    }else if(th_is.className.indexOf("layim-friends-user") !== -1){
+                        yes_html = friend_icon_html;
+                        th_is.classList.add('right-click-select');
+                    }
+                    if(typeof(yes_html) !== "undefined"){
+                        layer.open({
+                            skin: 'layim-tips',
+                            title: false,
+                            area: '500px',
+                            shade: 0,
+                            closeBtn: 0,
+                            resize: false,
+                            fixed: false,
+                            move: false,
+                            btn: false,
+                            offset: [(e.clientY + 10) + 'px',(e.clientX + 10) + 'px'],
+                            content: yes_html,
+                        });
+                    }else{
+                        var index = $(".layim-tips").attr('times');
+                        layer.close(index);
+                    }
+                });
+                $(document).on('click', '.layim-tips', function(e){
+                    var th_is  = $(".right-click-select"),
+                        length = th_is.length;
+                    if(th_is.attr("class").indexOf("layim-friends-group") !== -1){
+                        if(e.target.classList[1] === "group-add"){
+                            var num = $(".layim-friends-group").length,
+                                html = '<li class="layim-group group_' + (num + 1) + '">' +
+                                            '<h5 class="layim-friends-group" lay-type="false">' +
+                                                '<i class="layui-icon layui-icon-right"></i>' +
+                                                '<span>未命名</span>' +
+                                            '</h5>' +
+                                            '<ul class="layim-friends-list"></ul>' +
+                                        '</li>';
+                            $(".layim-content-friends").append(html);
+                        }else if(e.target.classList[1] === "group-rename"){
+                            var html = th_is.html(),
+                                text = th_is.children("span").text(),
+                                num  = html.lastIndexOf("<span");
+                            if(num !== -1){
+                                th_is.attr("lay-type","select");
+                                html = html.substr(0,num);
+                                html = html + '<input type="text" name="group_name" value="' + text + '" />';
+                                th_is.html(html);
+                            }
+                        }
+                    }
+                });
+                //关闭右键菜单
+                $(document).on('click', function(e){
+                    var index = $(".layim-tips").attr('times');
+                    layer.close(index);
+                    // remove_user_select();
+                    //用户触发click事件就可以关闭了，因为绑定在window上，按事件冒泡处理，不会影响菜单的功能
+                    // document.querySelector('#menu').style.height = 0;
+                });
+                function remove_user_select(){
+                    // 先取消分组的input框
+                    $(".layim-group").children("h5").attr("lay-type","false");
+                    $(".layim-group").find("i").removeClass("layui-icon-down").addClass("layui-icon-right");
+                    $(".layim-group").children("ul").removeClass("active");
+                    var h5_html = $("h5.right-click-select").html(),
+                        input = $("h5.right-click-select").children("input").val();
+                    if(typeof(h5_html) !== "undefined"){
+                        num  = h5_html.lastIndexOf("<input");
+                        if(num !== -1){
+                            h5_html = h5_html.substr(0,num);
+                            h5_html = h5_html + '<span>' + input + '</span>';
+                            $("h5.right-click-select").html(h5_html);
+                        }
+                    }
+                    // 再去除所有的右击选中状态
+                    $(".right-click-select").removeClass("right-click-select");
+                }
+            });
+        </script>
+    </head>
+<body>
+     <!-- onload="connect()" -->
+    <div class="layui-row clearfix">
+        <!-- 原始界面 -->
+        <div class="layui-layim layim-right-click">
+            <div class="layui-layim-user">
+                <div class="layui-layim-main">
+                    <div class="layui-layim-main-info">
+                        <div class="info-icon">
+                            <img src="http://worker.bmf.com/msg_error.png"/>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-name">未知</div>
+                            <div class="info-status online"></div>
+                            <p class="info-ramark" title=" "> </p>
+                        </div>
+                    </div>
+                    <ul class="layui-layim-main-tab">
+                        <li class="layui-icon layui-icon-friends active" title="联系人"></li>
+                        <li class="layui-icon layui-icon-group" title="群聊"></li>
+                        <li class="layui-icon layui-icon-reply-fill" title="会话"></li>
+                    </ul>
+                    <hr/>
+                </div>
+                <span class="layui-layim-close2">
+                    <a class="layui-icon layui-icon-close" href="javascript:;"></a>
+                </span>
+            </div>
+            <div class="layui-layim-content" lay-type="off">
+                <ul class="layim-content-friends active"></ul>
+                <ul class="layim-content-group">2</ul>
+                <ul class="layim-content-reply-fill">3</ul>
+            </div>
+            <ul class="layui-layim-tool">
+                <li class="layui-icon layui-icon-search"></li>
+                <li></li>
+            </ul>
+        </div>
+        <!-- 缩小之后的界面 -->
+        <div class="layui-layim-min layui-layim-close1">
+            <div class="layui-layer-content">
+                <img src="http://worker.bmf.com/1.jpg"/>
+                <span>我的IM</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8">
+        <title></title>
+        <script type="text/javascript" src="js/jquery.min.js"></script>
+        <script type="text/javascript"></script>
+    </head>
+    <body>
+        <form class="login" action="" method="post">
+            账号：<input type="text" name="mobile"/>
+            密码：<input type="password" name="pwd" />
+            <input type="button" value="登录"/>
+        </form>
+        <script type="text/javascript">
+            $(document).ready(function(){
+                $(".login :button").on('click',function(){
+                    $.post(
+                        'http://worker.bmf.com/index.php/home/login/login',{
+                            'mobile':$(".login :text").val(),
+                            'pwd':$(".login :password").val(),
+                        },
+                        function(result){
+                            result = JSON.parse(result);
+                            // console.log(result);
+                            // console.log(result.code);
+                            if(result.code == '200'){
+                                sessionStorage.setItem('user_id',result.data.id);
+                                sessionStorage.setItem('user_name',result.data.name);
+                                sessionStorage.setItem('user_icon',result.data.avatar);
+                                window.location.href = 'http://worker.bmf.com/web/chat.html';
+                            }else{
+
+                            }
+                        }
+                    );
+                });
+            });
+        </script>
+    </body>
+</html>

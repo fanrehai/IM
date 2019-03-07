@@ -15,9 +15,6 @@
                 font-size: 14px;
                 font-style: normal;
             }
-            /* .layui-container{
-                background-color: #ffffff;
-            } */
             body{
                 background: url(../chat/bg.png) repeat;
                 /* position: relative; */
@@ -617,6 +614,17 @@
                 background-color: #ccc;
                 /* user-select: none; */
             }
+            .layim-friend-info{}
+            .layim-friend-info .layui-layer-content.bg{
+                background-color: rgba(0,0,0,0.3);
+            }
+            .layim-friend-info .layim-friend-loading{
+                padding: 40% 0 0 40%;
+            }
+            .layim-friend-info i.layui-icon-loading-1{
+                font-size: 60px;
+                color: white;
+            }
         </style>
         <script type="text/javascript" src="js/jquery.min.js"></script>
         <script src="../layui/layui.js"></script>
@@ -630,15 +638,19 @@
                 WEB_SOCKET_SWF_LOCATION = "/swf/WebSocketMain.swf";
                 // 开启flash的websocket debug
                 WEB_SOCKET_DEBUG = true;
-                var ws;
-
+                var ws,
+                    error_num = 0; //重试次数
+                    function killErrors()
+                   {
+                       return true;
+                   }
+                   window.onerror = killErrors;
                 $(document).ready(function(){
                     connect();
                 });
 
                 var user = decodeURIComponent(decodeURIComponent(document.cookie));
                 user = JSON.parse(user.substr(11));
-                // user = user;
 
                 // 连接服务端
                 function connect() {
@@ -740,9 +752,14 @@
                 // 服务端连接关闭
                 function onclose(){
                     $(".info-status").removeClass('online').addClass('offline');
-                    setTimeout(function(){
-                        connect();
-                    }, 2000);
+                    // 重试次数大于10，就取消自动连接
+                    if(error_num < 9){
+                        error_num += 1
+                        setTimeout(function(){
+                            connect();
+                        }, 2000);
+                    }
+                    log(error_num);
                 }
                 // 获取好友列表
                 $.get('http://worker.bmf.com/user/info', function(res){
@@ -830,7 +847,7 @@
                     $(this).parents('li').siblings().find('li.layim-friends-user').removeClass('active');
                 });
                 // 好友双击效果
-                $(".layim-content-friends").on('dblclick', '.layim-friends-user', function(){
+                $(".layim-content-friends").on('dblclick', '.layim-friends-user', function(event){
                     var num   = $(".layui-layer-page").length,
                         state = $(".layim-chat").css('display'),
                         index = $(".layim-chat-min").attr('times'),
@@ -864,7 +881,6 @@
                                           '</div>' +
                                         '</li>',
                         is_exist = $(".layim-chat-list").children("li#" + uid + '-icon').length;
-
 
                     if(num < 1){
                         layer.open({
@@ -1196,22 +1212,23 @@
                     var th_is = e.target,
                         yes_html,
                         group_html = '<div class="menu-list"><div class="menu group-add">添加分组</div><div class="menu group-rename">重命名</div></div>',
-                        friend_icon_html = '<div class="menu-list"><div class="menu friend-chat-send">发送消息</div><div class="menu friend-info">查看资料</div><div class="menu friend-chatlog">消息记录</div><div class="menu friend-del">删除好友</div><div class="menu friend-report">举报此用户</div></div>',
+                        friend_icon_html = '<div class="menu-list"><div class="menu friend-info">查看资料</div><div class="menu friend-chatlog">消息记录</div><div class="menu friend-del">删除好友</div><div class="menu friend-report">举报此用户</div></div>',
                         friend_chat_html = '<div class="menu-list"><div class="menu friend-top">置顶</div><div class="menu friend-chat-no-bb">消息免打扰</div></div>';
                     if(th_is.className == ""){
                         th_is = e.target.parentNode;
                     }
-                    // log(th_is);
                     if(th_is.className.indexOf("layim-friends-group") !== -1){
-                        remove_user_select();
+                        remove_input(1);
                         yes_html = group_html;
                         th_is.classList.add('right-click-select');
                     }else if(th_is.className.indexOf("layim-chat-icon") !== -1){
                         yes_html = friend_chat_html;
                         th_is.classList.add('right-click-select');
                     }else if(th_is.className.indexOf("layim-friends-user") !== -1){
+                        remove_input(0);
                         yes_html = friend_icon_html;
                         th_is.classList.add('right-click-select');
+                        th_is.classList.add('active');
                     }
                     if(typeof(yes_html) !== "undefined"){
                         layer.open({
@@ -1257,21 +1274,46 @@
                                 th_is.html(html);
                             }
                         }
+                    }else if(th_is.attr("class").indexOf("layim-friends-user") !== -1){
+                        if(e.target.classList[1] === "friend-info"){
+                            var uid = th_is.attr('id');
+                            uid = uid.substring(12);
+                            layer.open({
+                                skin: 'layim-friend-info',
+                                title: '用户资料',
+                                area: ['500px', '500px'],
+                                shade: 0,
+                                closeBtn: 1,
+                                resize: false,
+                                btn: false,
+                                content: '<div class="layim-friend-loading"><i class="layui-icon layui-icon-loading-1 layui-icon layui-anim layui-anim-rotate layui-anim-loop"></i></div>',//
+                            });
+                            $(".layim-friend-info").children("div.layui-layer-content").addClass("bg");
+                            // 获取好友资料
+                            // $.post('http://worker.bmf.com/user/bind', {friend_id: uid}, function(res){
+                            //      $(".layui-layim-main-info").find("img").attr("src",res['data']['avatar']);
+                            //      $(".layui-layim-main-info").find("div.info-name").text(res['data']['name']);
+                            //      $(".layui-layim-main-info").find("div.info-ramark").text(res['data']['sign']);
+                            //      if(res){
+                            //      }
+                            // }, 'json');
+
+                            // log(uid);
+                        }
                     }
                 });
                 //关闭右键菜单
                 $(document).on('click', function(e){
                     var index = $(".layim-tips").attr('times');
                     layer.close(index);
-                    // remove_user_select();
-                    //用户触发click事件就可以关闭了，因为绑定在window上，按事件冒泡处理，不会影响菜单的功能
-                    // document.querySelector('#menu').style.height = 0;
                 });
-                function remove_user_select(){
-                    // 先取消分组的input框
-                    $(".layim-group").children("h5").attr("lay-type","false");
-                    $(".layim-group").find("i").removeClass("layui-icon-down").addClass("layui-icon-right");
-                    $(".layim-group").children("ul").removeClass("active");
+                function remove_input(input = 0){
+                    if(input === 1){
+                        $(".layim-group").children("h5").attr("lay-type","false");
+                        $(".layim-group").find("i").removeClass("layui-icon-down").addClass("layui-icon-right");
+                        $(".layim-group").children("ul").removeClass("active");
+                    }
+
                     var h5_html = $("h5.right-click-select").html(),
                         input = $("h5.right-click-select").children("input").val();
                     if(typeof(h5_html) !== "undefined"){
@@ -1283,7 +1325,7 @@
                         }
                     }
                     // 再去除所有的右击选中状态
-                    $(".right-click-select").removeClass("right-click-select");
+                    $(".right-click-select").removeClass("right-click-select").removeClass("active");
                 }
             });
         </script>

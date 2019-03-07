@@ -29,8 +29,10 @@ return [
         'friends'   => ['home/user/friendslist', ['method' => 'get']],
         'close'     => ['home/user/userClose', ['method' => 'get']],
         'info'      => ['home/user/userInfo', ['method' => 'get']],
-        // 'img'       => ['home/user/imgZq', ['method' => 'get']],
         'init'      => ['home/user/userInit', ['method' => 'get']],
+    ],
+    '[friend]'   => [
+        'info'      => ['home/friend/friendInfo', ['methob' => 'get']], 
     ],
 
 ];
